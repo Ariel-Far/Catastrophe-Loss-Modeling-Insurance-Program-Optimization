@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catastrophe Risk Simulator — Ariel Farzan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#16243F; --navy2:#1f3257; --slate:#5B6B85; --ink:#2A2F38;
+    --paper:#FBFAF7; --line:#E3DFD6; --brass:#B08D4C; --brass-soft:#C9AE7B;
+    --fire:#C0392B; --nws:#2D6E9E; --eq:#3C8A5B; --total:#6E4B8E; --panel:#F3F0E9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--paper); color:var(--ink); font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  .serif{font-family:Georgia,"Times New Roman",serif;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px 60px;}
+
+  header{background:var(--navy); color:#fff; padding:34px 0 30px; margin-bottom:34px; position:relative; overflow:hidden;}
+  header::after{content:""; position:absolute; inset:0 0 0 54%; background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 7px); -webkit-mask:linear-gradient(90deg,transparent,#000); mask:linear-gradient(90deg,transparent,#000);}
+  .hwrap{max-width:1080px; margin:0 auto; padding:0 24px; position:relative; z-index:2;}
+  .eyebrow{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--brass-soft); font-weight:600; margin-bottom:11px; display:flex; align-items:center; gap:10px;}
+  .eyebrow::before{content:""; width:26px; height:1.5px; background:var(--brass);}
+  header h1{font-family:Georgia,serif; font-size:27px; font-weight:700; letter-spacing:-.01em; line-height:1.15; max-width:74%;}
+  header p{margin-top:11px; font-size:12.5px; color:#C4CCD9; max-width:64%; line-height:1.55;}
+
+  .layout{display:grid; grid-template-columns:300px 1fr; gap:26px; align-items:start;}
+
+  /* CONTROLS */
+  .controls{background:#fff; border:1px solid var(--line); border-radius:9px; padding:22px; position:sticky; top:20px;}
+  .controls h2{font-family:Georgia,serif; font-size:15px; color:var(--navy); margin-bottom:4px;}
+  .controls .sub{font-size:11px; color:var(--slate); margin-bottom:20px; line-height:1.5;}
+  .ctrl{margin-bottom:21px;}
+  .ctrl-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .ctrl-label{font-size:11.5px; font-weight:600; color:var(--ink);}
+  .ctrl-val{font-family:"SF Mono",Menlo,Consolas,monospace; font-size:12.5px; color:var(--navy); font-weight:700; background:var(--panel); padding:1px 8px; border-radius:4px;}
+  .ctrl .hint{font-size:9.5px; color:var(--slate); margin-top:7px; line-height:1.4;}
+  input[type=range]{-webkit-appearance:none; width:100%; height:4px; border-radius:3px; background:var(--line); outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:17px; height:17px; border-radius:50%; background:var(--navy); cursor:pointer; border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25);}
+  input[type=range]::-moz-range-thumb{width:17px; height:17px; border-radius:50%; background:var(--navy); cursor:pointer; border:3px solid #fff;}
+  .peril-toggles{display:flex; gap:7px; margin-bottom:6px;}
+  .ptog{flex:1; text-align:center; font-size:10px; font-weight:700; padding:8px 4px; border-radius:6px; border:1.5px solid var(--line); cursor:pointer; user-select:none; transition:.12s; color:var(--slate); background:var(--paper);}
+  .ptog.on{color:#fff; border-color:transparent;}
+  .ptog.fire.on{background:var(--fire);} .ptog.nws.on{background:var(--nws);} .ptog.eq.on{background:var(--eq);}
+  .runbtn{width:100%; background:var(--brass); color:#fff; border:none; padding:12px; border-radius:7px; font-size:12.5px; font-weight:700; letter-spacing:.03em; cursor:pointer; margin-top:6px; transition:.15s;}
+  .runbtn:hover{background:#9a7a3f;}
+  .runbtn:active{transform:translateY(1px);}
+
+  /* RESULTS */
+  .results{display:flex; flex-direction:column; gap:20px;}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--navy); border-radius:9px; overflow:hidden;}
+  .kpi{padding:17px 14px; text-align:center; border-right:1px solid rgba(255,255,255,.13); background:var(--navy); color:#fff;}
+  .kpi:last-child{border-right:none;}
+  .kpi .v{font-family:Georgia,serif; font-size:23px; font-weight:700; line-height:1;}
+  .kpi .v small{font-size:13px; color:var(--brass-soft);}
+  .kpi .l{font-size:8.5px; letter-spacing:.06em; text-transform:uppercase; color:#A7B1C1; margin-top:7px; line-height:1.35;}
+
+  .chartcard{background:#fff; border:1px solid var(--line); border-radius:9px; padding:18px 20px 20px;}
+  .chartcard .ch-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .chartcard h3{font-family:Georgia,serif; font-size:15px; color:var(--navy);}
+  .chartcard .ch-sub{font-size:10.5px; color:var(--slate);}
+  .chartbox{position:relative; height:300px; margin-top:14px;}
+
+  .progcard{background:#fff; border:1px solid var(--line); border-radius:9px; padding:18px 20px 20px;}
+  table{width:100%; border-collapse:collapse; font-size:11.5px; margin-top:12px;}
+  th{background:var(--navy); color:#fff; text-align:left; padding:8px 12px; font-weight:600; font-size:10px; letter-spacing:.03em;}
+  th.r,td.r{text-align:right;}
+  td{padding:8px 12px; border-bottom:1px solid var(--line);}
+  tr:nth-child(even) td{background:var(--panel);}
+  .mono{font-family:"SF Mono",Menlo,Consolas,monospace; font-size:11px;}
+  .best{color:#2f6b45; font-weight:700;}
+  .rec-badge{display:inline-block; font-size:8px; letter-spacing:.06em; text-transform:uppercase; background:#EAF3EC; color:#2f6b45; padding:2px 6px; border-radius:3px; font-weight:700; margin-left:6px;}
+
+  .note{font-size:10px; color:var(--slate); line-height:1.5; padding-left:12px; border-left:2px solid var(--brass); margin-top:14px;}
+  footer{margin-top:34px; padding-top:18px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--slate);}
+  footer b{font-family:Georgia,serif; color:var(--navy);}
+  @media(max-width:880px){.layout{grid-template-columns:1fr;} .controls{position:static;} .kpis{grid-template-columns:repeat(2,1fr);} header h1,header p{max-width:100%;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="eyebrow">Interactive Model · Catastrophe Risk</div>
+    <h1>Catastrophe Loss Simulator</h1>
+    <p>Move the assumptions and watch a live Monte Carlo re-price the risk. The same engine behind the case
+    study — now in your hands. Built by Ariel Farzan.</p>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="layout">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <h2>Assumptions</h2>
+    <div class="sub">Adjust the drivers of loss. The simulation reruns instantly across thousands of synthetic years.</div>
+
+    <div class="ctrl">
+      <div class="ctrl-head"><span class="ctrl-label">Fire frequency</span><span class="ctrl-val" id="v_fire">15</span></div>
+      <input type="range" id="s_fire" min="5" max="30" value="15" step="1">
+      <div class="hint">Expected fire claims per year (Poisson mean λ).</div>
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-head"><span class="ctrl-label">Fire severity scale</span><span class="ctrl-val" id="v_sev">1.0×</span></div>
+      <input type="range" id="s_sev" min="0.5" max="2" value="1" step="0.05">
+      <div class="hint">Scales the fitted Lognormal severity — stress-test larger or smaller losses.</div>
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-head"><span class="ctrl-label">Earthquake likelihood</span><span class="ctrl-val" id="v_eq">40%</span></div>
+      <input type="range" id="s_eq" min="0" max="100" value="40" step="5">
+      <div class="hint">Chance of at least one earthquake in a given year.</div>
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-head"><span class="ctrl-label">Simulated years</span><span class="ctrl-val" id="v_n">10,000</span></div>
+      <input type="range" id="s_n" min="2000" max="30000" value="10000" step="2000">
+      <div class="hint">More years = smoother tail, slower run.</div>
+    </div>
+
+    <div class="ctrl">
+      <span class="ctrl-label" style="display:block;margin-bottom:9px;">Perils included</span>
+      <div class="peril-toggles">
+        <div class="ptog fire on" data-p="fire">Fire</div>
+        <div class="ptog nws on" data-p="nws">Wind</div>
+        <div class="ptog eq on" data-p="eq">Quake</div>
+      </div>
+    </div>
+
+    <button class="runbtn" id="run">Rerun Simulation</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results">
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="k_mean">—</div><div class="l">Mean Annual Loss</div></div>
+      <div class="kpi"><div class="v" id="k_p95">—</div><div class="l">95th Pct (1-in-20)</div></div>
+      <div class="kpi"><div class="v" id="k_p99">—</div><div class="l">99th Pct (1-in-100)</div></div>
+      <div class="kpi"><div class="v" id="k_max">—</div><div class="l">Worst Simulated Year</div></div>
+    </div>
+
+    <div class="chartcard">
+      <div class="ch-head">
+        <h3>Distribution of Annual Total Loss</h3>
+        <span class="ch-sub" id="ch_n">10,000 simulated years</span>
+      </div>
+      <div class="chartbox"><canvas id="histChart"></canvas></div>
+      <div class="note"><b>The shape is the story.</b> The body shows what a normal year costs; the long right tail is the rare
+      catastrophic year that drives insurance decisions. Push earthquake likelihood up and watch the tail stretch — that's
+      exactly the exposure a median-based view hides.</div>
+    </div>
+
+    <div class="progcard">
+      <h3 style="font-family:Georgia,serif;font-size:15px;color:var(--navy);">Insurance Program Comparison</h3>
+      <span class="ch-sub" style="font-size:10.5px;color:var(--slate);">Live retained-loss &amp; cost-of-risk under current assumptions</span>
+      <table id="progTable">
+        <thead><tr><th>Program</th><th class="r">Premium</th><th class="r">Avg Retained</th><th class="r">TVaR 95%</th><th class="r">Total Cost of Risk</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="note">Recommendation logic is live: the program with the lowest <b>Total Cost of Risk</b> is flagged automatically.
+      Stress the assumptions hard enough and the optimal program changes — which is the whole point of modeling the tail.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div><b>Catastrophe Loss Simulator</b> — a working demonstration of stochastic risk modeling. Originated from a Runner-Up Aon-sponsored case competition analysis.</div>
+  <div style="text-align:right;"><b>Ariel Farzan</b><br><span style="font-size:10px;">ArielFarzan@ucla.edu</span></div>
+</footer>
+</div>
+
+<script>
+// ---- lightweight RNG helpers ----
+function randn(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function poisson(l){ let L=Math.exp(-l),k=0,p=1; do{k++;p*=Math.random();}while(p>L); return k-1; }
+// fitted fire Lognormal params (from real data): meanlog, sdlog
+const FIRE_MU=12.4, FIRE_SIG=1.45;
+// Pareto sampler from mean & CV
+function paretoSample(mean,cv){ const cv2=cv*cv; const alpha=(1+Math.sqrt(1+4/cv2))/2+1; const xm=mean*(alpha-1)/alpha; return xm/Math.pow(Math.random(),1/alpha); }
+function pick(vals,probs){ const r=Math.random(); let c=0; for(let i=0;i<vals.length;i++){c+=probs[i]; if(r<=c)return vals[i];} return vals[vals.length-1]; }
+
+let perils={fire:true,nws:true,eq:true};
+
+function simulate(){
+  const lam=+document.getElementById('s_fire').value;
+  const sevScale=+document.getElementById('s_sev').value;
+  const eqLik=+document.getElementById('s_eq').value/100;
+  const N=+document.getElementById('s_n').value;
+  const totals=new Float64Array(N);
+  // EQ frequency: redistribute around chosen P(at least one)
+  for(let y=0;y<N;y++){
+    let t=0;
+    if(perils.fire){ const k=poisson(lam); for(let i=0;i<k;i++){ t+=Math.exp(FIRE_MU+FIRE_SIG*randn())*sevScale; } }
+    if(perils.nws){ const k=pick([2,3,4,5],[.4,.2,.2,.2]); for(let i=0;i<k;i++){ t+=paretoSample(794000,3.7); } }
+    if(perils.eq){
+      // P(0)=1-eqLik; remaining split 1/2/3 claims as 50/25/25 of eqLik
+      const k=Math.random()<eqLik ? pick([1,2,3],[.5,.25,.25]) : 0;
+      for(let i=0;i<k;i++){ t+=paretoSample(10670000,34.5); }
+    }
+    totals[y]=t;
+  }
+  return totals;
+}
+
+function quantile(sorted,q){ const pos=(sorted.length-1)*q; const b=Math.floor(pos); return sorted[b]+(sorted[b+1]-sorted[b]||0)*(pos-b); }
+function fmt(x){ if(x>=1e9)return '$'+(x/1e9).toFixed(2)+'B'; if(x>=1e6)return '$'+(x/1e6).toFixed(1)+'M'; if(x>=1e3)return '$'+(x/1e3).toFixed(0)+'K'; return '$'+x.toFixed(0); }
+function fmtM(x){ return (x/1e6).toFixed(1); }
+
+const PROGRAMS=[
+  {name:'Insurer 1', retention:10e6, fireLimit:1e9, coins:0, nwsCap:100e6, eqCap:500e6, premium:51.27e6},
+  {name:'Insurer 2', retention:10e6, fireLimit:1e9, coins:0, nwsCap:100e6, eqCap:1e9, premium:54.10e6},
+  {name:'Insurer 3', retention:1e6, fireLimit:1e9, coins:0.30, nwsCap:100e6, eqCap:1e9, premium:59.41e6},
+];
+
+let chart;
+function render(totals){
+  const sorted=Float64Array.from(totals).sort();
+  const mean=totals.reduce((a,b)=>a+b,0)/totals.length;
+  const p95=quantile(sorted,.95), p99=quantile(sorted,.99), max=sorted[sorted.length-1];
+  document.getElementById('k_mean').innerHTML=fmt(mean).replace(/([MBK])/,'<small>$1</small>');
+  document.getElementById('k_p95').innerHTML=fmt(p95).replace(/([MBK])/,'<small>$1</small>');
+  document.getElementById('k_p99').innerHTML=fmt(p99).replace(/([MBK])/,'<small>$1</small>');
+  document.getElementById('k_max').innerHTML=fmt(max).replace(/([MBK])/,'<small>$1</small>');
+  document.getElementById('ch_n').textContent=totals.length.toLocaleString()+' simulated years';
+
+  // ---- program table (independent of chart) ----
+  renderTable(totals);
+
+  // ---- histogram (chart may fail if Chart.js CDN unavailable; never block the rest) ----
+  try{ renderChart(totals, p99); }catch(e){ /* chart unavailable */ }
+}
+
+function renderChart(totals, p99){
+  if(typeof Chart==='undefined') return;
+  const cap=Math.max(p99*1.15, 1e6);
+  const bins=42, w=cap/bins, counts=new Array(bins).fill(0);
+  for(const v of totals){ if(v<=cap){ let b=Math.min(bins-1,Math.floor(v/w)); counts[b]++; } }
+  const labels=counts.map((_,i)=>(i*w/1e6).toFixed(0));
+  if(chart) chart.destroy();
+  chart=new Chart(document.getElementById('histChart'),{
+    type:'bar',
+    data:{labels, datasets:[{data:counts, backgroundColor:'#6E4B8E', borderColor:'#fff', borderWidth:0.3, barPercentage:1, categoryPercentage:1}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{title:(t)=>'~$'+t[0].label+'M annual loss', label:(c)=>c.parsed.y.toLocaleString()+' years'}}},
+      scales:{x:{title:{display:true,text:'Annual Total Loss ($M)',font:{size:10}},grid:{display:false},ticks:{font:{size:9},maxTicksLimit:12}},
+              y:{title:{display:true,text:'Simulated Years',font:{size:10}},grid:{color:'#eee'},ticks:{font:{size:9}}}}
+    }
+  });
+}
+
+function renderTable(totals){
+  const tb=document.querySelector('#progTable tbody'); tb.innerHTML='';
+  const rows=PROGRAMS.map(pr=>{
+    let retSum=0, tail=[];
+    for(const v of totals){
+      let r=Math.min(v,pr.retention)+Math.max(0,v-pr.retention)*pr.coins+Math.max(0,v-pr.retention-pr.fireLimit);
+      retSum+=r; tail.push(r);
+    }
+    const avg=retSum/totals.length;
+    tail.sort((a,b)=>a-b);
+    const cut=Math.floor(tail.length*0.95);
+    const tvar=tail.slice(cut).reduce((a,b)=>a+b,0)/Math.max(1,tail.length-cut);
+    return {name:pr.name, premium:pr.premium, avg, tvar, tcor:avg+pr.premium};
+  });
+  const minTcor=Math.min(...rows.map(r=>r.tcor));
+  const minTvar=Math.min(...rows.map(r=>r.tvar));
+  const minAvg=Math.min(...rows.map(r=>r.avg));
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${r.name}</b>${r.tcor===minTcor?'<span class="rec-badge">Recommended</span>':''}</td>
+      <td class="r mono">${fmt(r.premium)}</td>
+      <td class="r mono ${r.avg===minAvg?'best':''}">${fmt(r.avg)}</td>
+      <td class="r mono ${r.tvar===minTvar?'best':''}">${fmt(r.tvar)}</td>
+      <td class="r mono ${r.tcor===minTcor?'best':''}">${fmt(r.tcor)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function run(){ render(simulate()); }
+
+// wire controls
+function bind(id,valId,fmtFn){ const s=document.getElementById(id),v=document.getElementById(valId); s.addEventListener('input',()=>{v.textContent=fmtFn(s.value); run();}); }
+bind('s_fire','v_fire',x=>x);
+bind('s_sev','v_sev',x=>(+x).toFixed(2)+'×');
+bind('s_eq','v_eq',x=>x+'%');
+bind('s_n','v_n',x=>(+x).toLocaleString());
+document.querySelectorAll('.ptog').forEach(t=>t.addEventListener('click',()=>{ const p=t.dataset.p; perils[p]=!perils[p]; t.classList.toggle('on',perils[p]); run(); }));
+document.getElementById('run').addEventListener('click',run);
+run();
+</script>
+</body>
+</html>

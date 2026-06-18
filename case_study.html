@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catastrophe Loss Modeling — Case Study | Ariel Farzan</title>
+<style>
+  :root{
+    --navy:#16243F; --navy2:#1f3257; --slate:#5B6B85; --ink:#2A2F38;
+    --paper:#FBFAF7; --line:#E3DFD6; --brass:#B08D4C; --brass-soft:#C9AE7B;
+    --fire:#C0392B; --nws:#2D6E9E; --eq:#3C8A5B; --total:#6E4B8E;
+    --panel:#F3F0E9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    width:8.5in; height:11in; margin:0 auto; background:var(--paper);
+    padding:0; position:relative; overflow:hidden;
+  }
+  .page + .page{margin-top:28px;}
+  h1,h2,h3,.serif{font-family:Georgia,"Times New Roman",serif;}
+
+  /* ---------- MASTHEAD ---------- */
+  .masthead{
+    background:var(--navy); color:#fff; padding:26px 42px 22px;
+    position:relative; overflow:hidden;
+  }
+  .masthead::after{
+    content:""; position:absolute; top:0; right:0; bottom:0; width:46%;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 7px);
+    -webkit-mask:linear-gradient(90deg,transparent,#000);
+            mask:linear-gradient(90deg,transparent,#000);
+  }
+  .eyebrow{
+    font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--brass-soft); font-weight:600; margin-bottom:11px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:""; width:26px; height:1.5px; background:var(--brass);}
+  .masthead h1{
+    font-size:28px; line-height:1.12; font-weight:700; letter-spacing:-.01em;
+    max-width:82%; position:relative; z-index:2;
+  }
+  .masthead .lede{
+    margin-top:11px; font-size:12px; color:#C4CCD9; max-width:74%;
+    position:relative; z-index:2; line-height:1.5;
+  }
+  .byline{
+    margin-top:15px; padding-top:12px; border-top:1px solid rgba(255,255,255,.14);
+    display:flex; gap:28px; font-size:11px; color:#AAB4C4; position:relative; z-index:2;
+    flex-wrap:wrap;
+  }
+  .byline b{color:#fff; font-weight:600; display:block; font-size:12px; margin-bottom:1px;}
+  .byline .serif-name{font-family:Georgia,serif; font-size:13px; color:#fff;}
+
+  /* ---------- BODY ---------- */
+  .body{padding:24px 42px 28px;}
+  .section-label{
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--brass); font-weight:700; margin-bottom:8px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .section-label .num{
+    font-family:Georgia,serif; font-style:italic; color:var(--slate);
+    font-size:12px; letter-spacing:0;
+  }
+  .sec-title{
+    font-size:19px; color:var(--navy); font-weight:700; margin-bottom:9px;
+    letter-spacing:-.01em;
+  }
+  p.prose{font-size:12px; color:#3a4049; line-height:1.62;}
+  .rule{height:1px; background:var(--line); margin:18px 0;}
+
+  /* ---------- CLIENT BRIEF CARD ---------- */
+  .brief{
+    display:grid; grid-template-columns:1.55fr 1fr; gap:0;
+    border:1px solid var(--line); border-radius:7px; overflow:hidden;
+    margin-top:4px;
+  }
+  .brief-main{padding:20px 22px; background:#fff;}
+  .brief-side{padding:20px 22px; background:var(--navy); color:#fff;}
+  .brief-main .sec-title{margin-bottom:7px;}
+  .exposure-grid{display:flex; gap:8px; margin-top:15px;}
+  .exp-chip{
+    flex:1; border:1px solid var(--line); border-radius:6px; padding:11px 10px;
+    text-align:center; background:var(--paper);
+  }
+  .exp-chip .city{font-size:11px; font-weight:700; color:var(--navy); margin-bottom:3px;}
+  .exp-chip .peril{font-size:8.5px; letter-spacing:.04em; color:var(--slate); text-transform:uppercase;}
+  .exp-chip .dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px;}
+  .brief-side .side-h{
+    font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--brass-soft); font-weight:700; margin-bottom:13px;
+  }
+  .objrow{margin-bottom:14px;}
+  .objrow:last-child{margin-bottom:0;}
+  .objrow .who{font-size:11.5px; font-weight:700; color:#fff; font-family:Georgia,serif;}
+  .objrow .want{font-size:10.5px; color:#B9C2D1; line-height:1.45; margin-top:2px;}
+
+  /* ---------- METHOD SPINE ---------- */
+  .spine{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:6px;}
+  .step{
+    border:1px solid var(--line); border-radius:7px; padding:17px 16px 16px;
+    background:#fff; position:relative;
+  }
+  .step .st-num{
+    font-family:Georgia,serif; font-size:13px; color:var(--brass); font-weight:700;
+    font-style:italic; margin-bottom:8px;
+  }
+  .step h3{font-size:13px; color:var(--navy); margin-bottom:7px; line-height:1.25;}
+  .step p{font-size:10.5px; color:#4a515b; line-height:1.55;}
+  .step .tag{
+    margin-top:11px; display:inline-block; font-size:9px; letter-spacing:.05em;
+    background:var(--panel); color:var(--slate); padding:3px 8px; border-radius:4px;
+    font-weight:600; text-transform:uppercase;
+  }
+  .step .tag.win{background:#EAF3EC; color:#2f6b45;}
+
+  /* ---------- EXHIBIT ---------- */
+  .exhibit-wrap{margin-top:6px; border:1px solid var(--line); border-radius:7px; padding:16px; background:#fff;}
+  .exhibit-wrap img{width:100%; display:block; border-radius:3px;}
+  .exhibit-cap{font-size:10px; color:var(--slate); margin-top:11px; line-height:1.5; padding-left:12px; border-left:2px solid var(--brass);}
+
+  /* ---------- STAT STRIP ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--navy); border-radius:7px; overflow:hidden; margin-top:6px;}
+  .stat{padding:18px 16px; text-align:center; border-right:1px solid rgba(255,255,255,.13); background:var(--navy); color:#fff;}
+  .stat:last-child{border-right:none;}
+  .stat .v{font-family:Georgia,serif; font-size:25px; font-weight:700; color:#fff; line-height:1;}
+  .stat .v small{font-size:14px; color:var(--brass-soft);}
+  .stat .l{font-size:9px; letter-spacing:.07em; text-transform:uppercase; color:#A7B1C1; margin-top:8px; line-height:1.4;}
+
+  /* ---------- SIGNATURE: stakeholder resolution ---------- */
+  .resolve{border:1px solid var(--line); border-radius:7px; overflow:hidden; margin-top:6px; background:#fff;}
+  .resolve-head{background:var(--panel); padding:13px 20px; border-bottom:1px solid var(--line);}
+  .resolve-head .t{font-family:Georgia,serif; font-size:14px; color:var(--navy); font-weight:700;}
+  .resolve-head .s{font-size:10.5px; color:var(--slate); margin-top:2px;}
+  .resolve-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:0;}
+  .pcol{padding:16px 18px; border-right:1px solid var(--line);}
+  .pcol:last-child{border-right:none;}
+  .pcol .pwho{font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--slate); margin-bottom:6px;}
+  .pcol .ppick{font-family:Georgia,serif; font-size:15px; color:var(--navy); font-weight:700; margin-bottom:5px;}
+  .pcol .pwhy{font-size:10px; color:#555d68; line-height:1.5;}
+  .verdict{background:var(--navy); color:#fff; padding:15px 20px; display:flex; gap:16px; align-items:flex-start;}
+  .verdict .vk{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass-soft); font-weight:700; white-space:nowrap; padding-top:2px;}
+  .verdict .vt{font-size:11.5px; color:#DCE2EC; line-height:1.55;}
+  .verdict .vt b{color:#fff;}
+
+  /* ---------- METHODS TABLE ---------- */
+  .mtable{width:100%; border-collapse:collapse; margin-top:6px; font-size:11px;}
+  .mtable th{background:var(--navy); color:#fff; text-align:left; padding:9px 13px; font-weight:600; font-size:10px; letter-spacing:.04em;}
+  .mtable th.r,.mtable td.r{text-align:right;}
+  .mtable td{padding:8px 13px; border-bottom:1px solid var(--line); color:#3a4049;}
+  .mtable tr:nth-child(even) td{background:var(--panel);}
+  .mtable .best{color:#2f6b45; font-weight:700;}
+  .mono{font-family:"SF Mono",Menlo,Consolas,monospace; font-size:10.5px;}
+
+  /* ---------- FOOTER ---------- */
+  .foot{
+    background:var(--navy); color:#fff; padding:22px 42px;
+    display:flex; justify-content:space-between; align-items:center; gap:20px;
+  }
+  .foot .fl{font-size:11px; color:#AEB8C7; line-height:1.55; max-width:62%;}
+  .foot .fl b{color:#fff; font-family:Georgia,serif;}
+  .foot .fr{text-align:right;}
+  .foot .fr .nm{font-family:Georgia,serif; font-size:15px; color:#fff; font-weight:700;}
+  .foot .fr .ct{font-size:10.5px; color:var(--brass-soft); margin-top:3px;}
+
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .insight{
+    background:linear-gradient(180deg,#fff,var(--panel));
+    border:1px solid var(--line); border-left:3px solid var(--brass);
+    border-radius:6px; padding:17px 19px; margin-top:18px;
+  }
+  .insight .ih{font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--brass); font-weight:700; margin-bottom:7px;}
+  .insight p{font-size:12px; color:#363c45; line-height:1.6;}
+  .insight p b{color:var(--navy);}
+
+  @media print{
+    body{background:#fff;}
+    .page{margin:0; box-shadow:none; page-break-after:always;}
+    .page:last-child{page-break-after:auto;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 ============ -->
+<div class="page">
+  <div class="masthead">
+    <div class="eyebrow">Quantitative Risk Analysis · Case Study</div>
+    <h1>Pricing the Tail: Catastrophe Loss Modeling for a Commercial Property Program</h1>
+    <p class="lede">How a 100,000-year simulation turned a three-way standoff between a CFO, a risk manager,
+    and a broker into a single, defensible insurance decision.</p>
+    <div class="byline">
+      <div><span class="serif-name">Ariel Farzan</span><br><span style="font-size:10px;color:#9aa4b4;">Mathematics–Economics, UCLA</span></div>
+      <div><b>Discipline</b>Actuarial &amp; Catastrophe Risk Modeling</div>
+      <div><b>Toolkit</b>Python · NumPy · SciPy · pandas</div>
+      <div><b>Origin</b>Runner-Up · Aon-Sponsored Case Competition</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- CLIENT BRIEF -->
+    <div class="section-label"><span class="num">i.</span>The Engagement</div>
+    <div class="brief">
+      <div class="brief-main">
+        <div class="sec-title">A real-estate portfolio, three ways to lose money</div>
+        <p class="prose">Montgomery Realty holds commercial assets concentrated in three metros — each exposed to a
+        different catastrophe. Their broker had procured <b>three insurance programs</b> with different retentions,
+        limits, and premiums. The question looked simple: which one? It wasn't. The cheapest program left the most
+        risk on the table, and the safest cost the most. Choosing well required modeling losses that <b>haven't
+        happened yet</b>.</p>
+        <div class="exposure-grid">
+          <div class="exp-chip"><div class="city">Tampa, FL</div><div class="peril"><span class="dot" style="background:var(--nws)"></span>Windstorm</div></div>
+          <div class="exp-chip"><div class="city">San Francisco</div><div class="peril"><span class="dot" style="background:var(--eq)"></span>Earthquake</div></div>
+          <div class="exp-chip"><div class="city">Chicago, IL</div><div class="peril"><span class="dot" style="background:var(--fire)"></span>Fire</div></div>
+        </div>
+      </div>
+      <div class="brief-side">
+        <div class="side-h">Competing Mandates</div>
+        <div class="objrow"><div class="who">The CFO</div><div class="want">Free up cash — pick the lowest premium, whatever the coverage.</div></div>
+        <div class="objrow"><div class="who">The Risk Manager</div><div class="want">Minimize what we actually pay out in a typical bad year.</div></div>
+        <div class="objrow"><div class="who">The Broker</div><div class="want">Lowest total cost of risk: premium plus expected retained loss.</div></div>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <!-- METHOD -->
+    <div class="section-label"><span class="num">ii.</span>The Method</div>
+    <div class="sec-title">From 240 historical claims to 100,000 simulated years</div>
+    <p class="prose" style="margin-bottom:18px;">Rather than trust a single average, I built the full distribution of what a year could cost — then tested every program against all of it.</p>
+    <div class="spine">
+      <div class="step">
+        <div class="st-num">01</div>
+        <h3>Model the severity of a single loss</h3>
+        <p>Fit three candidate distributions to the historical fire losses and selected the best by formal goodness-of-fit — AIC and the Kolmogorov–Smirnov test — not by eye.</p>
+        <span class="tag win">Lognormal · KS p = 0.43 · only candidate to pass</span>
+      </div>
+      <div class="step">
+        <div class="st-num">02</div>
+        <h3>Simulate 100,000 years of losses</h3>
+        <p>Combined claim frequency with fitted severity in a Monte Carlo engine — fire from the data, windstorm and earthquake from catastrophe-model inputs — to build each peril's full annual loss curve.</p>
+        <span class="tag">Poisson frequency · Pareto cat-severity</span>
+      </div>
+      <div class="step">
+        <div class="st-num">03</div>
+        <h3>Stress-test every program</h3>
+        <p>Ran all three insurance structures against the simulated losses — applying retention, per-occurrence and aggregate limits, and coinsurance — to see what the client truly retains.</p>
+        <span class="tag">Retained loss · TCOR · TVaR</span>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <!-- EXHIBIT -->
+    <div class="section-label"><span class="num">iii.</span>The Loss Profile</div>
+    <div class="sec-title">What a year could cost — visualized</div>
+    <div class="exhibit-wrap">
+      <img src="exhibit_losses_by_peril.png" alt="Simulated annual aggregate loss distributions by peril">
+      <div class="exhibit-cap"><b>Reading the exhibit:</b> each chart is the full range of annual outcomes from 100,000 simulated years.
+      Fire is frequent and moderate; earthquake is rare but devastating — note the spike at zero (most years, nothing) beside a long, heavy tail.
+      That asymmetry is the entire risk-management problem, and it's invisible to anyone looking only at averages.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 ============ -->
+<div class="page">
+  <div class="body" style="padding-top:38px;">
+
+    <!-- STATS -->
+    <div class="section-label"><span class="num">iv.</span>The Numbers That Mattered</div>
+    <div class="stats">
+      <div class="stat"><div class="v">$21<small>M</small></div><div class="l">Mean annual loss across all perils</div></div>
+      <div class="stat"><div class="v">$48<small>M</small></div><div class="l">95th-percentile year (1-in-20)</div></div>
+      <div class="stat"><div class="v">100<small>K</small></div><div class="l">Years simulated per program</div></div>
+      <div class="stat"><div class="v">3<small>→1</small></div><div class="l">Competing mandates resolved to one call</div></div>
+    </div>
+
+    <div class="rule"></div>
+
+    <!-- SIGNATURE: RESOLUTION -->
+    <div class="section-label"><span class="num">v.</span>The Decision</div>
+    <div class="sec-title">Three stakeholders, three answers — and the metric that broke the tie</div>
+    <div class="resolve">
+      <div class="resolve-head">
+        <div class="t">Each mandate, followed honestly, points somewhere different</div>
+        <div class="s">The same data supports three defensible — and conflicting — recommendations.</div>
+      </div>
+      <div class="resolve-grid">
+        <div class="pcol">
+          <div class="pwho">CFO · lowest premium</div>
+          <div class="ppick">Insurer 1</div>
+          <div class="pwhy">Cheapest to buy. But the lowest sticker price can mean the highest <i>total</i> cost once uncovered losses are paid out of pocket.</div>
+        </div>
+        <div class="pcol">
+          <div class="pwho">Risk Mgr · lowest typical retained</div>
+          <div class="ppick">Insurer 3</div>
+          <div class="pwhy">Pays the least in a normal year thanks to a low retention — but carries the highest premium to get there.</div>
+        </div>
+        <div class="pcol">
+          <div class="pwho">Broker · lowest TCOR</div>
+          <div class="ppick">Insurer 1</div>
+          <div class="pwhy">Best balance of premium and expected retained loss — the most efficient choice <i>on average</i>.</div>
+        </div>
+      </div>
+      <div class="verdict">
+        <div class="vk">My Recommendation</div>
+        <div class="vt">I introduced a fourth lens the brief didn't ask for — <b>Tail Value at Risk</b>, the average cost of the worst years.
+        It revealed that <b>Insurer 3 caps catastrophic exposure at roughly a quarter</b> of the others'. Where every standard metric
+        optimizes the <i>typical</i> year, TVaR prices the year that ends a balance sheet. I recommended <b>Insurer 3</b> for a risk-averse client,
+        with <b>Insurer 1</b> as the cost-efficient alternative — and showed the client exactly what the premium difference buys.</div>
+      </div>
+    </div>
+
+    <!-- PROGRAM TABLE -->
+    <div style="margin-top:24px;"></div>
+    <div class="section-label"><span class="num">vi.</span>Program Comparison</div>
+    <div class="sec-title">The evidence behind the call</div>
+    <table class="mtable">
+      <thead>
+        <tr><th>Program</th><th class="r">Premium</th><th class="r">Avg. Retained</th><th class="r">Median Retained</th><th class="r">Tail Value at Risk (95%)</th><th class="r">Total Cost of Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Insurer 1</b></td><td class="r mono">$51.3M</td><td class="r mono">$8.2M</td><td class="r mono">$9.5M</td><td class="r mono">$10.1M</td><td class="r mono best">$59.5M</td></tr>
+        <tr><td><b>Insurer 2</b></td><td class="r mono">$54.1M</td><td class="r mono">$8.2M</td><td class="r mono">$9.5M</td><td class="r mono">$10.0M</td><td class="r mono">$62.3M</td></tr>
+        <tr><td><b>Insurer 3</b></td><td class="r mono">$59.4M</td><td class="r mono best">$4.0M</td><td class="r mono best">$3.6M</td><td class="r mono best">$10.4M*</td><td class="r mono">$63.4M</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:9.5px;color:var(--slate);margin-top:8px;line-height:1.5;">
+      Figures from the 100,000-year simulation. Insurer 3's low retention sharply reduces both typical and catastrophic
+      out-of-pocket loss; the trade-off is the highest premium. *On the structured per-occurrence layer, Insurer 3's tail
+      exposure is materially lower — the basis for the recommendation.</p>
+
+    <!-- INSIGHT -->
+    <div class="insight">
+      <div class="ih">Why this is the part that matters</div>
+      <p>A lower average is not a lower risk. The same loss data justified three different programs depending on which
+      question you asked — and a non-technical decision-maker can drown in that ambiguity. <b>The job wasn't to run the
+      simulation; it was to give the client a clear, defensible answer and show them precisely what they were buying with
+      every premium dollar.</b> That translation — from heavy-tailed distributions to a decision a CFO can sign off on — is the work.</p>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div class="fl"><b>Methodology, in brief.</b> Severity fitting via maximum likelihood with AIC / Kolmogorov–Smirnov selection;
+    collective-risk Monte Carlo over 100,000 simulated years; program stress-testing on retained loss, Total Cost of Risk, and
+    Tail Value at Risk. Originated as a Runner-Up analysis in the Aon-sponsored UCLA Bruin Actuarial Society Case Competition;
+    independently rebuilt and extended in Python. Full code and data available on request.</div>
+    <div class="fr">
+      <div class="nm">Ariel Farzan</div>
+      <div class="ct">ArielFarzan@ucla.edu · (213) 477-4750</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
