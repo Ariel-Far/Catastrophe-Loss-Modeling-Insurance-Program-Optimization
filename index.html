@@ -1,24 +1,300 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Ariel Farzan — Catastrophe Loss Simulator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ariel Farzan — Catastrophe Loss Modeling</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0b1020;
+      color: #e8edf7;
+      line-height: 1.6;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1100px, 92%);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 80px 0 50px;
+      background: linear-gradient(135deg, #10182f 0%, #0b1020 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8fb3ff;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .hero p {
+      max-width: 760px;
+      font-size: 1.1rem;
+      color: #c8d2e6;
+      margin-bottom: 28px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 35px;
+    }
+
+    .btn {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: 0.2s ease;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: #4f7cff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3c68e6;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #e8edf7;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .stat h3 {
+      font-size: 0.95rem;
+      color: #9fb2d9;
+      margin-bottom: 8px;
+    }
+
+    .stat p {
+      font-size: 1rem;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .section {
+      padding: 55px 0;
+    }
+
+    .section h2 {
+      font-size: 1.9rem;
+      margin-bottom: 14px;
+    }
+
+    .section-intro {
+      color: #b8c3d9;
+      margin-bottom: 28px;
+      max-width: 760px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: #121a31;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 22px;
+      transition: 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(143,179,255,0.45);
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .card p {
+      color: #bcc7dd;
+      font-size: 0.97rem;
+      margin-bottom: 16px;
+    }
+
+    .card a {
+      color: #8fb3ff;
+      font-weight: 700;
+    }
+
+    .highlight {
+      background: linear-gradient(135deg, rgba(79,124,255,0.14), rgba(79,124,255,0.04));
+      border: 1px solid rgba(79,124,255,0.35);
+    }
+
+    .footer {
+      padding: 30px 0 50px;
+      color: #95a3c2;
+      font-size: 0.95rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .footer a {
+      color: #8fb3ff;
+    }
+  </style>
 </head>
 <body>
-  <h1>Catastrophe Loss Simulator</h1>
+  <section class="hero">
+    <div class="container">
+      <div class="eyebrow">Portfolio Project</div>
+      <h1>Catastrophe Loss Modeling & Insurance Program Optimization</h1>
+      <p>
+        A catastrophe-risk modeling project built from a Runner-Up Aon-sponsored case competition submission,
+        then rebuilt and extended into an interactive analytics tool. This project combines Monte Carlo simulation,
+        tail-risk reasoning, and insurance program comparison into a clean, decision-focused showcase.
+      </p>
 
-  <p>
-    A catastrophe-loss modeling project with a case study, interactive dashboard,
-    Python model, and supporting exhibits.
-  </p>
+      <div class="button-row">
+        <a class="btn btn-primary" href="risk_simulator.html">Launch Interactive Dashboard</a>
+        <a class="btn btn-secondary" href="Ariel_Farzan_Case_Study.pdf">Open Case Study PDF</a>
+        <a class="btn btn-secondary" href="case_study.html">View Web Case Study</a>
+      </div>
 
-  <ul>
-    <li><a href="risk_simulator.html">Interactive Dashboard</a></li>
-    <li><a href="Ariel_Farzan_Case_Study.pdf">Case Study PDF</a></li>
-    <li><a href="case_study.html">Web Case Study</a></li>
-    <li><a href="cat_loss_model.py">Python Model</a></li>
-    <li><a href="Loss_Run_20241231.xlsx">Loss Data</a></li>
-    <li><a href="exhibit_losses_by_peril.png">Loss Exhibit</a></li>
-  </ul>
+      <div class="quick-stats">
+        <div class="stat">
+          <h3>Built With</h3>
+          <p>Python, simulation modeling, HTML</p>
+        </div>
+        <div class="stat">
+          <h3>Focus</h3>
+          <p>Catastrophe loss, insurance structure, tail risk</p>
+        </div>
+        <div class="stat">
+          <h3>Best For</h3>
+          <p>Recruiters, interviews, portfolio review</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>What this project shows</h2>
+      <p class="section-intro">
+        This is more than a static school project. It demonstrates technical modeling ability,
+        business communication, and the ability to turn analysis into a tool decision-makers can actually use.
+      </p>
+
+      <div class="grid">
+        <div class="card highlight">
+          <h3>Interactive Dashboard</h3>
+          <p>
+            Adjust catastrophe assumptions like fire frequency, earthquake likelihood, and severity,
+            then watch the simulated risk and insurance recommendation update in real time.
+          </p>
+          <a href="risk_simulator.html">Open dashboard →</a>
+        </div>
+
+        <div class="card">
+          <h3>Case Study PDF</h3>
+          <p>
+            A polished visual summary of the problem, method, exhibits, and recommendation —
+            designed to be recruiter-friendly and easy to skim.
+          </p>
+          <a href="Ariel_Farzan_Case_Study.pdf">View PDF →</a>
+        </div>
+
+        <div class="card">
+          <h3>Web Case Study</h3>
+          <p>
+            A browser-based version of the case study for easy sharing and portfolio presentation.
+          </p>
+          <a href="case_study.html">Open web case study →</a>
+        </div>
+
+        <div class="card">
+          <h3>Python Model</h3>
+          <p>
+            The underlying Python analysis used to load data, fit assumptions, run simulation,
+            compare insurance programs, and generate supporting exhibits.
+          </p>
+          <a href="cat_loss_model.py">View Python file →</a>
+        </div>
+
+        <div class="card">
+          <h3>Historical Loss Data</h3>
+          <p>
+            Supporting dataset used in the modeling workflow for catastrophe-loss analysis.
+          </p>
+          <a href="Loss_Run_20241231.xlsx">Open Excel file →</a>
+        </div>
+
+        <div class="card">
+          <h3>Loss Exhibit</h3>
+          <p>
+            Supporting exhibit visualizing loss behavior by peril.
+          </p>
+          <a href="exhibit_losses_by_peril.png">View exhibit →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>One-line pitch</h2>
+      <p class="section-intro">
+        “I built a catastrophe-loss model that prices insurance decisions on tail risk — here’s the case study,
+        and here’s a live demo you can drive yourself.”
+      </p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      Created by <strong>Ariel Farzan</strong> · Hosted on GitHub Pages
+    </div>
+  </footer>
 </body>
 </html>
